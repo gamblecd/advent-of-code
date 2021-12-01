@@ -3,7 +3,7 @@ import os
 import sys
 
 script_dir = os.path.dirname( __file__ )
-mymodule_dir = os.path.join( script_dir, '..', '..', 'utils' )
+mymodule_dir = os.path.join( script_dir, '..', 'utils' )
 sys.path.append( mymodule_dir )
 
 from util import timer_func as timer
