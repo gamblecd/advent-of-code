@@ -1,6 +1,13 @@
 import fileinput
-filename = "Day1/inputs/actual.txt"
+import os
+import sys
 
+script_dir = os.path.dirname( __file__ )
+mymodule_dir = os.path.join( script_dir, '..', '..', 'utils' )
+sys.path.append( mymodule_dir )
+
+from util import timer_func as timer
+filename = "Day1/inputs/actual.txt"
 
 depths = []
 
@@ -9,21 +16,22 @@ for line in fileinput.input(files=(filename)):
     depth = int(line_data)
     depths.append(depth)
 
-def calculate_depths(depths, get_val=lambda x,y:y[x]):
+# O(N) Solution assuming get_depth remains O(1) lookup
+@timer
+def calculate_depths(depths, get_depth=lambda x,y:y[x]):
     previous_depth = None
-    depth = None
     increasing_count = 0
     for index in range(len(depths)):
-        val = get_val(index, depths)
-        if not (previous_depth == None or val == None):
-            if val > previous_depth:
+        depth = get_depth(index, depths)
+        if not (previous_depth == None or depth == None):
+            if depth > previous_depth:
                 increasing_count = increasing_count + 1
-        #         print('{depth} (increased)'.format(depth=val))
+        #         print('{depth} (increased)'.format(depth=depth))
         #     elif val == previous_depth:
-        #         print('{depth} (no change)'.format(depth=val))
+        #         print('{depth} (no change)'.format(depth=depth))
         # else:
-        #     print('{depth} (N/A - no previous measurement)'.format(depth=val))
-        previous_depth = val
+        #     print('{depth} (N/A - no previous measurement)'.format(depth=depth))
+        previous_depth = depth
     return increasing_count
 
 def add_next_2(index,arr):
