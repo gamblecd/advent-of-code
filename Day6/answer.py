@@ -38,7 +38,6 @@ def run_fast(time):
 def run_brute_force(time):
     global initial_state
     part1_state = initial_state.copy();
-    print(sorted(part1_state))
     zeros = 0
     for i in range(time):
         part1_state = sorted(list(map(lambda x: 6 if x==0 else x-1, part1_state)));
