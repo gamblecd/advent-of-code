@@ -11,6 +11,6 @@ def timer_func(func):
         return result
     return wrap_func
 
-def print_grid(grid):
+def print_grid(grid, sep=" "):
     for x in grid:
-        print(*x, sep=" ");
+        print(*x, sep=sep);
