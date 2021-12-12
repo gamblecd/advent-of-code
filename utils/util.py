@@ -10,3 +10,7 @@ def timer_func(func):
         print(f'Function {func.__name__!r} executed in {(t2-t1):.4f}s')
         return result
     return wrap_func
+
+def print_grid(grid):
+    for x in grid:
+        print(*x, sep=" ");
