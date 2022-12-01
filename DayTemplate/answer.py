@@ -8,7 +8,13 @@ mymodule_dir = os.path.join( script_dir, '..', 'utils' )
 sys.path.append( mymodule_dir )
 
 from util import timer_func as timer
-filename = os.path.join(script_dir, "inputs", "file.txt");
+args = sys.argv[1:]
+run_actual = len(args) >= 1 and args[0] == "PROD"
+if (run_actual):
+    filename = os.path.join(script_dir, "inputs", "actual.txt")
+else:
+    filename = os.path.join(script_dir, "inputs", "ex.txt")
+
 
 for line in fileinput.input(files=(filename)):
     line_data = line.strip()
