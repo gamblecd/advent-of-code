@@ -1,5 +1,17 @@
 from time import time
-  
+import os
+def get_input_file(args, script_dir, filename=None):
+    
+    if filename:
+        return  os.path.join(script_dir, "inputs", "actual.txt")
+    run_actual = len(args) >= 1 and args[0] == "PROD"
+    if (run_actual):
+        filename = os.path.join(script_dir, "inputs", "actual.txt")
+    else:
+        filename = os.path.join(script_dir, "inputs", "ex.txt")
+    return filename
+
+
 def timer_func(func):
     # This function shows the execution time of 
     # the function object passed
