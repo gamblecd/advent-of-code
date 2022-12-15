@@ -37,3 +37,44 @@ def timer_func_with_args(func):
 def print_grid(grid, sep=" "):
     for x in grid:
         print(*x, sep=sep);
+
+
+def print_grid(min, max, basic_char, overlays):
+    xmin, ymin = min
+    xmax, ymax = max
+
+    offset = min # TODO genericize this
+
+    grid = [[basic_char for _ in range(xmin, xmax+1)]
+            for _ in range(ymin, ymax + 1)]
+
+    # add overlays:
+    for overlay in overlays:
+        char, lst = overlay
+        for point in lst:
+            x = point[0] - offset[0]
+            y = point[1] - offset[1]
+            grid[y][x] = char
+
+
+    # Build Index Row (max 99)
+    x_lines = [["    "] for i in range((xmax+1) // 10)]
+    for i in range(xmin, xmax+1):
+        ones = x_lines[-1]
+        if i % 5 == 0:
+            ones.append(str(i % 10))
+            if i >= 10:
+                x_lines[-2].append(str(i //10))
+            else:
+                x_lines[-2].append(" ")
+        else:
+            for line in x_lines:
+                line.append(" ")
+    for line in x_lines:
+        print("".join(line))
+
+    y_index = ymin
+    for y in grid:
+        ## insert y index col (max 99)
+        print(str(y_index).rjust(3)+ " " + "".join(y))
+        y_index+=1
