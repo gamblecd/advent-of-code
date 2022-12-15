@@ -9,6 +9,11 @@ sys.path.append(os.path.join(script_dir, '..', '..', 'utils'))
 from util import get_input_file,print_grid, timer_func as timer
 
 filename = get_input_file(sys.argv[1:], script_dir)
+low = 0
+if len(sys.argv) == 2:
+    high = 4000000
+else:
+    high = 20
 
 sensors = []
 beacons = []
@@ -43,9 +48,6 @@ for line in fileinput.input(files=(filename)):
 def distance(p1, p2):
     return abs(p1[0]-p2[0]) + abs(p1[1]-p2[1])
 
-invalid_points = []
-valid_points = []
-
 sensors = sorted(sensors, key=lambda x: distance(
     x, sensorToBeacons[x]), reverse=True)
 max_distance = distance(sensors[0], sensorToBeacons[sensors[0]])
@@ -55,25 +57,64 @@ for sensor in sensors:
     xmin = min(ymin,sensor[0]-max_distance)
     xmax = max(xmax,sensor[0]+max_distance)
 
-def execute(y):
-    targets = [(x,y) for x in range(xmin, xmax)]
+def get_ranges(sensors, y):
+    ranges = []
     for sensor in sensors:
-        for test in targets:
-            if (test in beacons or test in sensors or test in invalid_points):
-                # ignore existing spots
-                continue
-            closest_distance = distance(sensor, sensorToBeacons[sensor])
-            if distance(sensor, (test)) <= closest_distance:
-                # No sensor could be here. mark it and move to the next point
-                invalid_points.append(test)
-        valid_points.append(test)
-        for t in invalid_points:
-            if t in targets:
-                targets.remove(t)
+        closest_distance = distance(sensor, sensorToBeacons[sensor])
+        left_over_distance = closest_distance - abs(sensor[1]-y)
+        if (left_over_distance >= 0):
+            ranges.append((sensor[0] - left_over_distance, sensor[0]+left_over_distance))
+    return ranges
 
-#execute(10)
-execute(2000000)
-#print_grid((xmin,ymin), (xmax,ymax), ".", [('#', invalid_points),('S', sensors),('B', beacons)])
-print("Part 1: ",len(invalid_points))
+def filterY(iter, y):
+    return list(filter(lambda x: x[1] == y, iter))
+
+def consolidate_ranges(ranges):
+    ranges = sorted(ranges)
+    if len(ranges) == 0:
+        return ranges;
+    # [(-2, 2), (0, 16), (1, 3), (4, 14), (4, 16), (4, 22), (6, 22), (8, 24), (12, 16), (13, 21), (16, 24), (16, 24)]
+    def reducer(x,y):
+        rmin, rmax = x[-1]
+        xmin, xmax = y
+        if (xmin > rmax):
+            x.append(y)
+        elif xmax > rmax:
+            x[-1] = (rmin, xmax)
+        elif xmin == rmax + 1:
+            x[-1] = (rmin, xmax)
+        else:
+            # ignore it because we already have it
+            pass
+        return x
+        #x is a list
+    return list(functools.reduce(reducer, ranges[1:], [ranges[0]]))
+
+def run_sums(ranges):
+    return sum([x[1]-x[0] for x in ranges])
+
+def execute(y, sensorsTest=sensors):
+
+    ranges = get_ranges(sensorsTest, y)
+    ranges = consolidate_ranges(ranges)
+    return ranges
+
+@timer
+def execute_point(point):
+    closestDistance = distance(point, sensorToBeacons[point])
+    for y in range(point[1]-closestDistance, point[1]+ closestDistance + 1):
+        execute(y, [point])
+@timer
+def execute_all(low, high):
+    for i in range(high, low, -1):
+        ranges = execute(i)
+        if (len(ranges)==2):
+            return (ranges[0][1]+1) * 4000000 + i
+        
+        
+# print_grid((xmin,ymin), (xmax,ymax), ".", [,('S', sensors),('B', beacons)])
+print("Part 1: ", run_sums(execute(high // 2)))
 print()
-print("Part 2: ",)
+print("Part 2: ", execute_all(0, high))
+
+
