@@ -23,9 +23,10 @@ class Valve():
         return 'Valve ' +  self.name
     def __str__(self):
         return self.__repr__()
+
 valves = {}
 valves_list = []
-valve_distances = defaultdict(lambda:{})
+
 for line in fileinput.input(files=(filename)):
     line_data = line.strip()
     split = line_data.split()
@@ -36,64 +37,151 @@ for line in fileinput.input(files=(filename)):
     valves[name] = valve
     valves_list.append(valve)
 
-
-attemptData = {'last_valve': '', 'moves':30, 'process':[],'current_valve':valves_list[0],'flow_rate':0,'open_valves': [],'total':0}
+valve_distances = defaultdict(lambda: defaultdict(lambda: (len(valves_list), [])))
 possibleValves = [v.name for v in filter(lambda v: v.rate > 0, valves_list)]
-
-def is_open(attemptData, valve):
-    return valve.name in attemptData['open_valves']
-
-def set_initial_distances():
-    for v in valves:
-        for vc in v.children_ids:
-            valve_distances[v.name][valves[vc][name]] = 1
-
-def move_to_valve(attemptData, valve):
-    attemptData['last_valve'] = attemptData['current_valve'].name
-    attemptData['current_valve'] = valve
-    attemptData['process'].append("Move to  " + attemptData['current_valve'].name)
-    
-def open_valve(attemptData):
-    attemptData['current_valve'].is_open = True
-    attemptData['flow_rate'] += attemptData['current_valve'].rate
-    attemptData['open_valves'].append(attemptData['current_valve'].name)
-    attemptData['process'].append("Open " + attemptData['current_valve'].name)
-    attemptData['total'] += attemptData['moves'] * attemptData['current_valve'].rate
 
 q = queue.PriorityQueue()
 
 # Find distance from every node to every other node
 # Find every combination of 
 
-def path_find(fro, to):
+def find_path(fro, visited):
+    if (q.empty()):
+        return
+    new_distance, c_name, path = q.get()
+    visited.append(c_name)
+    curr = valves[c_name]
+
+    #Memo distances
+    distance, visits = valve_distances[fro.name][c_name]
+    min_distance = min(distance, new_distance)
+    valve_distances[fro.name][c_name] = (min_distance, [x for x in path])
+
+
+    for c in curr.children_ids:
+        if not c in visited:
+            new_path = path.copy()
+            new_path.append(c)
+            q.put((min_distance+1,c,  new_path))
+    find_path(fro, visited)
+
+def path_find(fro, visited):
+    for c in fro.children_ids:
+        next = valves[c]
+        q.put((1, c, [c]))
+    find_path(fro, visited)
+
+@timer
+def find_all_distances():
+    for name, fro in valves.items():
+        path_find(fro, [fro.name])
+
+p = queue.PriorityQueue()
+
+
+def execute_move(starting, opened, moves, total):
+    if len(possibleValves) == len(opened):
+        return (total, opened)
+    options = []
+    for v in set(possibleValves) - set(opened):
+        # Find the max potential
+        movement = moves - valve_distances[starting.name][v][0]
+        if (movement <= 0):
+            # If we don't have any movement to open the valve, don't worry about this option.
+            continue
+        new_opened = [v]
+        new_opened.extend(opened)
+        potential = (movement-1) * valves[v].rate
+        new_total, path = execute_move(
+            valves[v], new_opened, movement-1, potential)
+        options.append((new_total, path))
+    if len(options) == 0:
+        return (total, opened)
+    chosen = max(options, key=lambda x: x[0])
+    return (total + chosen[0], chosen[1])
+
+def execute_move_state(state):
+    starting, path, opened, moves, total = state
+    starting = valves[path[0]]
+    path = path[1:]
+    return starting, path, opened, moves, total
+
+def execute_open_state(state):
+    starting, path, opened, moves, total = state
+        # open the valve
+    total += moves * starting.rate
+    opened = opened.copy()
+    opened.append(starting.name)
+    return (starting, path, opened, moves, total)
+
+def execute_decision(state):
+    starting, path, opened, moves, total = state
+    states = []
+       # Start moving to next place
+    for v in set(possibleValves) - set(opened):
+        # After opening, split this again
+        # TODO split state into reusable pieces that can be shared
+        # shared state is opened, total, moves
+        # unique state is starting, path
+        # new path is determined by shared state
+        # opened/ total is determined by unique state
+        # moves is global
+
+        # each time someone splits, the state
+        path = valve_distances[starting.name][v][1]
+        states.append((starting, path, opened.copy(), moves, total))
+    return states  
+
+def execute_turn(state):
+    starting, path, opened, moves, total = state
+    if len(path) == 0:
+        #execute open
+        pass
+
+def execute_minute(state):
+    starting, path, opened, moves, total = state
+    global possibleValves
+    if len(possibleValves) == len(opened):
+        return (total, opened)
+    if len(path) == 0 and (starting.rate) != 0 and starting.name not in opened:
+        # we are at the current valve
+        moves -= 1
+        # open the valve
+        state = execute_open_state(state)
+    elif len(path) == 0:
+        options = []
+        for s in execute_decision(state): 
+            new_total, new_path = execute_minute(s)
+            options.append((new_total, new_path))
+            if len(options) == 0:
+                return (total, opened)
+            chosen = max(options, key=lambda x: x[0])
+            return (chosen[0], chosen[1])
+    else:
+        moves -= 1
+        if (moves <= 0):
+            return (total, opened)
+        state = execute_move_state(state)
+        
+    return execute_minute(state)
+
+
+def execute_elephant(starting, opened, moves, total):
     pass
 
-def execute(attemptData):
-    if set(attemptData['open_valves']) == set(possibleValves):
-        return attemptData
-    if attemptData['moves'] == 0:
-        return attemptData
-    curr = attemptData['current_valve']
-    options = []
-        # can only move
-    for c in curr.children_ids:
-        if len(curr.children_ids) == 1 or not c == attemptData['last_valve']:
-            new_attempt = copy.deepcopy(attemptData)
-            new_attempt['moves'] = attemptData['moves'] - 1
-            move_to_valve(new_attempt, valves[c])
-            options.append(execute(new_attempt))
 
-    if curr.rate > 0 and not is_open(attemptData, curr):
-        # try opening too    
-        attemptData['moves'] -= 1
-        open_valve(attemptData)
-        options.append(execute(attemptData))
-    print([x['total'] for x in options])
-    return max(options, key=lambda x: x['total'])
-    
-ret = execute(attemptData)
-print(ret['process'])
-print(ret['total'])
-print("Part 1: ",)
+@timer
+def execute_moves():
+    return execute_move(valves["AA"], [], 30, 0)
+
+
+@timer
+def execute_minutes():
+    return execute_minute((valves["AA"], [], [], 30, 0))
+
+find_all_distances()   
+print(execute_moves())
+print(execute_minutes())
+#print("Part 1: ", execute_moves()[0])
 print()
 print("Part 2: ",)
