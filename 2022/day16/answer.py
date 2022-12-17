@@ -110,14 +110,14 @@ def execute_open_state(state):
     starting, path, opened, moves, total = state
         # open the valve
     total += moves * starting.rate
-    opened = opened.copy()
     opened.append(starting.name)
     return (starting, path, opened, moves, total)
+
 
 def execute_decision(state):
     starting, path, opened, moves, total = state
     states = []
-       # Start moving to next place
+    # Start moving to next place
     for v in set(possibleValves) - set(opened):
         # After opening, split this again
         # TODO split state into reusable pieces that can be shared
@@ -129,46 +129,73 @@ def execute_decision(state):
 
         # each time someone splits, the state
         path = valve_distances[starting.name][v][1]
-        states.append((starting, path, opened.copy(), moves, total))
-    return states  
+        states.append(execute_move_state((starting, path, opened.copy(), moves, total)))
+    return states
 
-def execute_turn(state):
-    starting, path, opened, moves, total = state
-    if len(path) == 0:
-        #execute open
-        pass
+def execute_turn(unique_one, shared, moves):
+    starting, path = unique_one
+    opened, total = shared
+    state = (starting, path, opened, moves, total)
+    states = []
+    if len(path) == 0 and (starting.rate) != 0 and starting.name not in opened:
+        states.append(execute_open_state(state))
+    elif len(path) == 0:
+        states.extend(execute_decision(state))
+    else:
+        states.append(execute_move_state(state))
+    return states
 
-def execute_minute(state):
-    starting, path, opened, moves, total = state
+def execute_elephant(unique, shared, moves):
+    opened, total = shared
     global possibleValves
     if len(possibleValves) == len(opened):
-        return (total, opened)
-    if len(path) == 0 and (starting.rate) != 0 and starting.name not in opened:
-        # we are at the current valve
-        moves -= 1
-        # open the valve
-        state = execute_open_state(state)
-    elif len(path) == 0:
-        options = []
-        for s in execute_decision(state): 
-            new_total, new_path = execute_minute(s)
-            options.append((new_total, new_path))
-            if len(options) == 0:
-                return (total, opened)
-            chosen = max(options, key=lambda x: x[0])
-            return (chosen[0], chosen[1])
-    else:
-        moves -= 1
-        if (moves <= 0):
-            return (total, opened)
-        state = execute_move_state(state)
+        return [shared]
+    if (moves <= 0):
+        return [shared]
+    unique_states = [[],[]]
+    curr = 0
+    shared_states = [[],[]]
+    
+    elephant = unique[0]
+    person = unique[1]
         
-    return execute_minute(state)
+    estates = execute_turn(elephant, shared, moves-1)
+    shared = (estates[2], estates[4])
+    pstates = execute_turn(person, shared, moves-1)
+    shared = (estates[2], estates[4])
+    new_states = []
+    if len(estates) == 1 and len(pstates)==1:
+        new_states.push((estates, pstates), )
+    for st in states:
+        s = (st[0], st[1])
+        unique_states[curr].append(s)
+        shared = (st[2], st[4])
+        shared_states[curr].append(shared)
+    curr +=1
 
+    unique_states = list(zip(unique_states[0],unique_states[1]))
+    new_states = [];
+    for i, s in enumerate(unique_states):
+        new_states.extend(execute_elephant(s, shared_states[curr-2][i], moves))
+    return new_states
+def execute_minute(state):
+    starting, path, opened, moves, total = state
+    #decrement moves
+    state = (starting, path, opened, moves-1, total)
+    states = []
+    global possibleValves
+    if len(possibleValves) == len(opened):
+        return [state]
+    if (moves <= 0):
+        return [state]
+    states = execute_turn((starting, path), (opened,total), moves-1)
 
-def execute_elephant(starting, opened, moves, total):
-    pass
-
+    if len(states)== 0:
+        return [state]
+    new_states = []
+    for s in states:
+        new_states.extend(execute_minute(s))
+    return new_states
 
 @timer
 def execute_moves():
@@ -177,11 +204,21 @@ def execute_moves():
 
 @timer
 def execute_minutes():
-    return execute_minute((valves["AA"], [], [], 30, 0))
+    states = execute_minute((valves["AA"], [], [], 30, 0))
+    chosen = max(states, key=lambda x: x[-1])
+    return chosen[-1], chosen[2]
+
+
+@timer
+def execute_elephants():
+    states = execute_elephant([(valves["AA"], []), (valves["AA"], [])], ([], 0), 26)
+    chosen = max(states, key=lambda x: x[-1])
+    return chosen[-1], chosen[0]
 
 find_all_distances()   
 print(execute_moves())
 print(execute_minutes())
+print(execute_elephants())
 #print("Part 1: ", execute_moves()[0])
 print()
 print("Part 2: ",)
