@@ -54,24 +54,28 @@ def print_grid(min, max, basic_char, overlays):
         for point in lst:
             x = point[0] - offset[0]
             y = point[1] - offset[1]
-            grid[y][x] = char
+            if callable(char):
+                grid[y][x] = char(point)
+            else:
+                grid[y][x] = char
+
 
 
     # Build Index Row (max 99)
-    x_lines = [["    "] for i in range((xmax+1) // 10)]
-    for i in range(xmin, xmax+1):
-        ones = x_lines[-1]
-        if i % 5 == 0:
-            ones.append(str(i % 10))
-            if i >= 10:
-                x_lines[-2].append(str(i //10))
-            else:
-                x_lines[-2].append(" ")
-        else:
-            for line in x_lines:
-                line.append(" ")
-    for line in x_lines:
-        print("".join(line))
+    # x_lines = [["    "] for i in range((xmax+1) // 10)]
+    # for i in range(xmin, xmax+1):
+    #     ones = x_lines[-1]
+    #     if i % 5 == 0:
+    #         ones.append(str(i % 10))
+    #         if i >= 10:
+    #             x_lines[-2].append(str(i //10))
+    #         else:
+    #             x_lines[-2].append(" ")
+    #     else:
+    #         for line in x_lines:
+    #             line.append(" ")
+    # for line in x_lines:
+    #     print("".join(line))
 
     y_index = ymin
     for y in grid:
