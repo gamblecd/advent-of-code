@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
         "./utils"
-    ]
+    ],
+    "terminal.integrated.scrollback": 10000
 }
