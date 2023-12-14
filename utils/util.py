@@ -1,5 +1,7 @@
 from time import time
 import os
+
+
 def get_input_file(args, script_dir, filename=None):
     
     if filename:
