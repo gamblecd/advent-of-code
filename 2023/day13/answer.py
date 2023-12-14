@@ -65,6 +65,36 @@ def findMirror(grid, column, finder=getColumn):
     else:
         return findMirror(grid, column+1, finder)
 
+def findMirror3(grid, column, finder=getColumn):
+    isColumn = finder == getColumn
+    gridLength = len(grid[0]) if finder == getColumn else len(grid)
+    if (column >= gridLength):
+        return -1
+    left_index = column
+    right_index =column+1
+    isMirror = False;
+    count = 0
+    while left_index >= 0 and right_index < gridLength:
+        left = finder(grid, left_index)
+        right = finder(grid, right_index)
+        wrongs = compare(left, right)
+        if (len(wrongs) == 1):
+            ind = wrongs[0]
+            if (isColumn):
+                point1 = (left_index, ind)
+                point2 = (right_index, ind)
+            else:
+                point1 = (ind, left_index)
+                point2 = (ind,right_index)
+            #print(point1, point2)
+        count+= len(compare(left, right))
+        left_index -= 1
+        right_index += 1
+    if count == 1:
+        return column + 1
+    else:
+        return findMirror3(grid, column+1, finder)
+
 def findMirror2(grid, column, finder=getColumn, canSwap = True):
     isColumn = finder == getColumn
     gridLength = len(grid[0]) if isColumn else len(grid)
@@ -91,14 +121,14 @@ def findMirror2(grid, column, finder=getColumn, canSwap = True):
             rGrid[point2[1]][point2[0]] = left[ind]
 
             lMirror = findMirror2(lGrid, column, finder, False);
-            if lMirror >=0:
-                print(point1, column, isColumn)
-                insertAndPrint(lGrid, column, isColumn)
+            if lMirror >=0 and findMirror(grid, column, finder) != lMirror:
+                #print(point1, column, isColumn)
+                #insertAndPrint(lGrid, column+1, isColumn)
                 return lMirror;
             rMirror = findMirror2(rGrid, column, finder, False);
-            if rMirror >=0:
-                print(point2, column, isColumn)
-                insertAndPrint(rGrid, column, isColumn)
+            if rMirror >=0 and findMirror(grid, column, finder) != rMirror:
+                #print(point2, column, isColumn)
+                #insertAndPrint(rGrid, column+1, isColumn)
                 return rMirror;
 
             isMirror = False;
@@ -117,11 +147,11 @@ def findMirror2(grid, column, finder=getColumn, canSwap = True):
     
 def insertAndPrint(grid, column, isColumn):
     if isColumn:
-        insertColumn(grid, column+1)
+        insertColumn(grid, column)
     else:
-        insertRow(grid, column+1)
+        insertRow(grid, column)
     for r in grid:
-        #print("".join(r))
+        print("".join(r))
         pass
 def insertColumn(grid, column):
     for row in grid:
@@ -143,15 +173,20 @@ def getGridValue(grid):
         return v_mirror
     
 def getGridValue2(grid):
-    print()
     v_mirror = findMirror2(grid, 0, getColumn)
     h_mirror = findMirror2(grid, 0, getRow)
+    print(v_mirror, h_mirror)
     if (v_mirror) < 0:
         if h_mirror > -1:
+            print(h_mirror)
+            insertAndPrint(grid, h_mirror, False)
+
             return h_mirror * 100
         else:
             print('Edge')
     else:
+        print(v_mirror)
+        insertAndPrint(grid, v_mirror, True)
         return v_mirror
     
 def part1(grids):
@@ -162,7 +197,10 @@ def part1(grids):
 
 def part2(grids):
     count = 0
-    for g in grids:
+    for i, g in enumerate(grids):
+        print()
+        print(i)
+        
         count += getGridValue2(g)
     print("Part 2: ", count)
 
