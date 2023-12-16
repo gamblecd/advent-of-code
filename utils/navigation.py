@@ -10,3 +10,6 @@ def south(point):
 def west(point):
     x,y = point
     return (x-1, y)
+def in_bounds(point, maxes):
+    x,y = point
+    return x >= 0 and x< maxes[0] and y >=0 and y<maxes[1]
