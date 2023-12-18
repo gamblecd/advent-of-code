@@ -63,21 +63,24 @@ def print_grid(min, max, basic_char, overlays):
 
 
 
-    # Build Index Row (max 99)
-    # x_lines = [["    "] for i in range((xmax+1) // 10)]
-    # for i in range(xmin, xmax+1):
-    #     ones = x_lines[-1]
-    #     if i % 5 == 0:
-    #         ones.append(str(i % 10))
-    #         if i >= 10:
-    #             x_lines[-2].append(str(i //10))
-    #         else:
-    #             x_lines[-2].append(" ")
-    #     else:
-    #         for line in x_lines:
-    #             line.append(" ")
-    # for line in x_lines:
-    #     print("".join(line))
+    #Build Index Row (max 99)
+    x_lines = [["    "] for i in range((xmax+1) // 10)]
+    if len(x_lines) != 0:
+        for i in range(xmin, xmax+1):
+            ones = x_lines[-1]
+            if i % 5 == 0:
+                if i < 0:
+                    ones[-1] = '-'
+                ones.append(str(i % 10))
+                if i >= 10:
+                    x_lines[-2].append(str(i //10))
+                else:
+                    x_lines[-2].append(" ")
+            else:
+                for line in x_lines:
+                    line.append(" ")
+        for line in x_lines:
+            print("".join(line))
 
     y_index = ymin
     for y in grid:
