@@ -102,36 +102,34 @@ def test_in_bounds(state, test):
 
 def counts(workflows, state, name):
     flow = workflows[name]
-    print(name, state)
     success_states = []
     for test, result in flow:
         if not test_in_bounds(state, test):
             break
-        if result != 'R':
+        if result != "R":
             state2 = state.copy()
-            if "<" in test:
-                attr, val = test.split("<")
+            if test != "":
+                splitter = "<" if "<" in test else ">"
+                split = test.split(splitter)
+                attr, val = split
                 val = int(val)
                 orig = state[attr]
-                new_state = (orig[0], min(orig[1], val-1))
-                if new_state[1] < new_state[0]:
-                    # invalid state
-                    continue
-                state2[attr] = new_state
-                state[attr] = (min(orig[1], val), orig[1])
-            elif ">" in test:
-                attr, val = test.split(">")
-                val = int(val)
-                orig = state[attr]
-                new_state = (max(orig[0], val+1), orig[1])
-                if new_state[1] < new_state[0]:
-                    # invalid state
-                    continue
-                state2[attr] = new_state
-                state[attr] = (orig[0], max(orig[0], val))
-        
+
+                if "<" in test:
+                    new_state = (orig[0], min(orig[1], val - 1))
+                    if new_state[1] < new_state[0]:
+                        # invalid state
+                        continue
+                    state2[attr] = new_state
+                    state[attr] = (min(orig[1], val), orig[1])
+                elif ">" in test:
+                    new_state = (max(orig[0], val + 1), orig[1])
+                    if new_state[1] < new_state[0]:
+                        # invalid state
+                        continue
+                    state2[attr] = new_state
+                    state[attr] = (orig[0], max(orig[0], val))
             if result == "A":
-                print("SUCCESS=>", name, state2)
                 success_states.append(state2)
             else:
                 success_states.extend(counts(workflows, state2.copy(), result))
@@ -164,10 +162,7 @@ def part2(workflows, parts):
         "a": (1, 4000),
         "s": (1, 4000),
     }
-    ranges2 = ranges.copy()
     success_states = counts(workflows, ranges, "in")
-    for s in success_states:
-        print(s)
     count = 0
     for state in success_states:
         distinct = 1
@@ -176,7 +171,7 @@ def part2(workflows, parts):
             if ma <= mi:
                 distinct = 0
                 break
-            distinct *= (ma - mi)+1
+            distinct *= (ma - mi) + 1
         count += distinct
     print("Part 2: ", count)
 
