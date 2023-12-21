@@ -65,7 +65,7 @@ def print_grid(min, max, basic_char, overlays):
 
     #Build Index Row (max 99)
     x_lines = [["    "] for i in range((xmax+1) // 10)]
-    if len(x_lines) != 0:
+    if len(x_lines) >= 2:
         for i in range(xmin, xmax+1):
             ones = x_lines[-1]
             if i % 5 == 0:
