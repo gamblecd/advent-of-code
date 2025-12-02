@@ -10,23 +10,30 @@ defmodule Util do
   # If filename is non-nil -> always returns "inputs/actual.txt"
   # Else if first arg is "PROD" -> "inputs/actual.txt"
   # Else -> "inputs/ex.txt"
-  def get_input_file(args, script_dir, filename \\ nil)
-
-  def get_input_file(_args, script_dir, filename) when not is_nil(filename) do
-    Path.join([script_dir, "inputs", "actual.txt"])
+  def get_input_file(args, script_dir) do
+    # first arg is filename
+    filename =
+      if length(args) == 0 do
+        "ex.txt"
+      else
+        case String.upcase(hd(args)) do
+          "PROD" -> "actual.txt"
+          "TEST" -> "ex.txt"
+          _ -> hd(args)
+        end
+      end
+    Path.join([script_dir, "inputs", filename])
   end
 
-  def get_input_file(args, script_dir, _filename) do
-    run_actual = length(args) >= 1 and hd(args) == "PROD"
+  def get_input_lines(args, script_dir) do
+    prep(get_input_file(args, script_dir))
+  end
 
-    file =
-      if run_actual do
-        "actual.txt"
-      else
-        "ex.txt"
-      end
-
-    Path.join([script_dir, "inputs", file])
+  def prep(filename) do
+    filename
+    |> File.stream!()
+    |> Stream.map(&String.trim/1)
+    |> Enum.to_list()
   end
 
   # Simple timing helper similar in spirit to timer_func decorator.
@@ -113,7 +120,7 @@ defmodule Util do
 
   defp build_x_index_rows(x_range, grid) do
     xmax = Enum.max(x_range)
-    xmin = Enum.min(x_range)
+    _xmin = Enum.min(x_range)
 
     if div(xmax + 1, 10) >= 2 do
       x_lines = List.duplicate(["    "], div(xmax + 1, 10))
