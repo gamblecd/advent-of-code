@@ -1,34 +1,31 @@
 defmodule Day do
   Code.require_file("utils/util.ex")
 
+  def prep_line("", {ranges, ingredients, _space}) do
+    {ranges, ingredients, true}
+  end
+  def prep_line(line, {ranges, ingredients, true}) when line != "" do
+    {ranges, ingredients ++ [String.to_integer(line)], true}
+  end
+  def prep_line(line, {ranges, ingredients, false}) do
+    [first, second] = String.split(line, "-") |>Enum.map(&String.to_integer/1)
+    {ranges ++ [{first, second}], ingredients, false}
+  end
+
   def prep(lines) do
-    Enum.reduce(lines, {[], [], false}, fn line, {ranges, ingredients, space} ->
-      if line == "" do
-        {ranges, ingredients, true}
-      else
-        if space do
-          {ranges, ingredients ++ [String.to_integer(line)], space}
-        else
-          [first, second] = String.split(line, "-") |>Enum.map(&String.to_integer/1)
-          {ranges ++ [{first, second}], ingredients, space}
-        end
-      end
-    end)
+    Enum.reduce(lines, {[], [], false}, &prep_line/2)
   end
 
   def part1(lines) do
     {ranges, ingredients, _} = prep(lines)
-    Enum.reduce(ingredients, 0,  fn ingredient, acc ->
-      val = Enum.find_value(ranges, fn range ->
+    Enum.count(ingredients, fn ingredient ->
+      Enum.find_value(ranges, fn range ->
         if in_range?(range, ingredient) do
-          ingredient
+          1
+        else
+          nil
         end
       end)
-      if val == nil do
-        acc
-      else
-        acc + 1
-      end
     end)
   end
 
@@ -38,8 +35,8 @@ defmodule Day do
   end
 
   def combine_ranges(ranges) do
-    ranges = Enum.sort(ranges)
-    Enum.reduce(ranges, [Enum.at(ranges, 0)], fn range, acc ->
+    [first | rest] = Enum.sort(ranges)
+    Enum.reduce(rest, [first], fn range, acc ->
       {first, last} = range
       new_range = Enum.find_value(Enum.with_index(acc), nil, fn {range2, index} ->
         {r2_first, r2_last} = range2
