@@ -59,6 +59,20 @@ defmodule Util do
     result
   end
 
+  def build_grid(lines) do
+    Enum.reduce(lines, [], fn line, grid ->
+      grid ++ [String.graphemes(line)]
+    end)
+  end
+
+    def reduce_grid(grid, acc, func) do
+    Enum.reduce(Enum.with_index(grid), acc, fn {row,y}, acc ->
+        Enum.reduce(Enum.with_index(row), acc, fn {value,x}, acc ->
+          func.(value, {x,y}, grid, acc)
+        end)
+    end)
+  end
+
   # print_grid_basic(grid, sep=" ")
   # grid is list of lists, e.g. [[".", "#"], [".", "."]]
   def print_grid_basic(grid, sep \\ " ") do
