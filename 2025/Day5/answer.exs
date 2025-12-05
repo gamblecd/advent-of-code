@@ -4,7 +4,7 @@ defmodule Day do
   def prep_line("", {ranges, ingredients, _space}) do
     {ranges, ingredients, true}
   end
-  def prep_line(line, {ranges, ingredients, true}) when line != "" do
+  def prep_line(line, {ranges, ingredients, true}) do
     {ranges, ingredients ++ [String.to_integer(line)], true}
   end
   def prep_line(line, {ranges, ingredients, false}) do
@@ -16,17 +16,8 @@ defmodule Day do
     Enum.reduce(lines, {[], [], false}, &prep_line/2)
   end
 
-  def part1(lines) do
-    {ranges, ingredients, _} = prep(lines)
-    Enum.count(ingredients, fn ingredient ->
-      Enum.find_value(ranges, fn range ->
-        if in_range?(range, ingredient) do
-          1
-        else
-          nil
-        end
-      end)
-    end)
+  def ingredient_fresh(fresh_ranges, ingredient) do
+      Enum.any?(fresh_ranges, &in_range?(&1, ingredient))
   end
 
   def in_range?(range, value) do
@@ -34,18 +25,22 @@ defmodule Day do
     value >= first and value <= second
   end
 
+  def merge_range(range, range2, index) do
+    {first, last} = range
+    {r2_first, r2_last} = range2
+      cond do
+        in_range?(range2, first) and in_range?(range2, last) -> {range2, index}
+        in_range?(range2, first) -> {{r2_first, last}, index}
+        in_range?(range2, last) -> {{first, r2_last}, index}
+        true -> nil
+      end
+  end
+
   def combine_ranges(ranges) do
     [first | rest] = Enum.sort(ranges)
     Enum.reduce(rest, [first], fn range, acc ->
-      {first, last} = range
       new_range = Enum.find_value(Enum.with_index(acc), nil, fn {range2, index} ->
-        {r2_first, r2_last} = range2
-        cond do
-          in_range?(range2, first) and in_range?(range2, last) -> {range2, index}
-          in_range?(range2, first) -> {{r2_first, last},index}
-          in_range?(range2, last) -> {{first, r2_last},index}
-          true -> nil
-        end
+        merge_range(range, range2, index)
       end)
       if new_range == nil do
         acc ++ [range]
@@ -62,10 +57,15 @@ defmodule Day do
     end)
   end
 
+
+  def part1(lines) do
+    {ranges, ingredients, _} = prep(lines)
+    Enum.count(ingredients, &ingredient_fresh(ranges, &1))
+  end
+
   def part2(lines) do
     {ranges, _, _} = prep(lines)
     count_space_in_ranges(combine_ranges(ranges))
-
   end
 
   # main entrypoint
