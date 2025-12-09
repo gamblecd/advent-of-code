@@ -84,6 +84,10 @@ defmodule Util do
     end)
   end
 
+  def get_index(grid, {x, y}) do
+    Enum.at(grid, y) |> Enum.at(x)
+  end
+
   # print_grid_basic(grid, sep=" ")
   # grid is list of lists, e.g. [[".", "#"], [".", "."]]
   def print_grid_basic(grid, sep \\ " ") do
@@ -94,6 +98,8 @@ defmodule Util do
       |> IO.puts()
     end)
   end
+
+  
 
   # print_grid(min, max, basic_char, overlays)
   # min = {xmin, ymin}, max = {xmax, ymax}
