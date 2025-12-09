@@ -26,10 +26,21 @@ defmodule Util do
   end
 
   def get_input_lines(args, script_dir) do
-    prep(get_input_file(args, script_dir))
+    prep(get_input_file(args, script_dir), false)
   end
 
-  def prep(filename) do
+  def get_input_lines(args, script_dir, trim) do
+    prep(get_input_file(args, script_dir), trim)
+  end
+
+  def prep(filename, false) do
+    filename
+    |> File.stream!()
+    |> Stream.map(fn x -> String.trim(x, "\n") end)
+    |> Enum.to_list()
+  end
+
+  def prep(filename, true) do
     filename
     |> File.stream!()
     |> Stream.map(&String.trim/1)
